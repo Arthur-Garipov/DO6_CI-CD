@@ -1,6 +1,6 @@
 
 STAGE_TYPE=$1
-BOT_TOKEN="7367256673:AAFMrd0loEadyExplJ8rr4RTCGu1B9swl6I"
+BOT_TOKEN="<use your telegram token bot>"
 CHAT_ID="268536608"
 
 sleep 3
