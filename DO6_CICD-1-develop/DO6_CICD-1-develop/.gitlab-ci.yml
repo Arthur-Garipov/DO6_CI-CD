@@ -1,0 +1,65 @@
+stages:
+  - build
+  - style
+  - test
+  - deploy
+
+build:
+  stage: build
+  tags:
+    - build_tag
+  script:
+    - rm -rf artifacts
+    - mkdir artifacts
+    - cd src/cat/
+    - make
+    - cd ../grep/
+    - make
+  artifacts:
+    paths:
+      - src/cat/s21_cat
+      - src/grep/s21_grep
+    expire_in: 30 days
+
+style:
+  stage: style
+  needs: ["build"]
+  tags:
+    - styke_tag
+  script:
+    - cp -r materials/linters/.clang-format src/cat
+    - cp -r materials/linters/.clang-format src/grep
+    - cd src/cat
+    - clang-format -n -Werror *.c
+    - cd ../grep
+    - clang-format -n -Werror *.c
+
+test:
+  stage: test
+  needs: ["build", "style"]
+  tags:
+    - test_tag
+  script:
+    - cd src/cat/
+    - cat_out=$(bash test.sh)
+    - cat_fail=$(echo "$cat_out" | grep "FAIL:" | awk '{print $2}')
+    - cd ../grep/
+    - grep_out=$(bash test.sh)
+    - grep_fail=$(echo "$grep_out" | grep "FAIL:" | awk '{print $2}')
+    - if [[ $cat_fail > 0 ]] || [[ $grep_fail != 0 ]]; then exit 1; fi
+  allow_failure: false
+  after_script:
+    - bash src/part6.sh
+  
+
+deploy:
+    stage: deploy
+    needs: ["build", "style", "test"]
+    tags:
+        - deploy_tag
+    script:
+        - cd src 
+        - bash deploy.sh
+    when: manual
+    after_script:
+    - bash src/part6.sh
